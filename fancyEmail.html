@@ -1,0 +1,658 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link type="text/css" rel="stylesheet" href="resources/sheet.css">
+<style type="text/css">
+  .ritz .waffle a {
+    color: inherit;
+  }
+
+  .ritz .waffle .s24 {
+    background-color: #ffffff;
+    text-align: right;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 12pt;
+    vertical-align: bottom;
+    white-space: normal;
+    overflow: hidden;
+    word-wrap: break-word;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s7 {
+    border-right: 1px SOLID #000000;
+    border-left: 1px SOLID #000000;
+    background-color: #6d9eeb;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 12pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s28 {
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 16pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s21 {
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: top;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s12 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s0 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    text-decoration: underline;
+    -webkit-text-decoration-skip: none;
+    text-decoration-skip-ink: none;
+    color: #1155cc;
+    font-family: 'Arial';
+    font-size: 11pt;
+    vertical-align: top;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0;
+  }
+
+  .ritz .waffle .s25 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: top;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s1 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    color: #0070c0;
+    font-family: 'docs-Roboto', Arial;
+    font-size: 26pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s22 {
+    background-color: #ffffff;
+    text-align: left;
+    color: #ff0000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: middle;
+    white-space: normal;
+    overflow: hidden;
+    word-wrap: break-word;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s5 {
+    border-right: 1px SOLID #000000;
+    border-left: 1px SOLID #000000;
+    background-color: #6d9eeb;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 12pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s14 {
+    border-bottom: 1px DOTTED #ff0000;
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 15pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s3 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: right;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s19 {
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Roboto', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s20 {
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Roboto', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s27 {
+    background-color: #ffffff;
+    text-align: right;
+    color: #000000;
+    font-family: 'Arial';
+    font-size: 24pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s16 {
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'Arial';
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s23 {
+    background-color: #ffffff;
+    text-align: center;
+    color: #ff0000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: middle;
+    white-space: normal;
+    overflow: hidden;
+    word-wrap: break-word;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s29 {
+    background-color: #ffffff;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 2pt;
+    vertical-align: bottom;
+    white-space: normal;
+    overflow: hidden;
+    word-wrap: break-word;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s18 {
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Roboto', Arial;
+    font-size: 11pt;
+    vertical-align: top;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s15 {
+    border-bottom: 1px SOLID #000000;
+    border-right: 1px SOLID #000000;
+    border-left: 1px SOLID #000000;
+    background-color: #6d9eeb;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 12pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s6 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    font-style: italic;
+    color: #434343;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 15pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s10 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s8 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'Arial';
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s9 {
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s26 {
+    border-bottom: 1px SOLID #000000;
+    background-color: #ffffff;
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: top;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s13 {
+    border-bottom: 1px DOTTED #ff0000;
+    background-color: #ffffff;
+    text-align: left;
+    font-style: italic;
+    color: #000000;
+    font-family: 'docs-Roboto', Arial;
+    font-size: 11pt;
+    vertical-align: middle;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s17 {
+    background-color: #ffffff;
+    text-align: right;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s4 {
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s2 {
+    border-bottom: 1px SOLID #000000;
+    border-right: 1px SOLID #000000;
+    border-left: 1px SOLID #000000;
+    background-color: #6d9eeb;
+    text-align: right;
+    font-weight: bold;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 11pt;
+    vertical-align: bottom;
+    white-space: nowrap;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s11 {
+    border-left: 1px SOLID #000000;
+    border-right: 1px SOLID #000000;
+    background-color: #6d9eeb;
+    text-align: right;
+    font-weight: bold;
+    color: #ffffff;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 12pt;
+    vertical-align: bottom;
+    white-space: normal;
+    overflow: hidden;
+    word-wrap: break-word;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+
+  .ritz .waffle .s30 {
+    background-color: #ffffff;
+    text-align: left;
+    color: #000000;
+    font-family: 'docs-Calibri', Arial;
+    font-size: 12pt;
+    vertical-align: bottom;
+    white-space: normal;
+    overflow: hidden;
+    word-wrap: break-word;
+    direction: ltr;
+    padding: 0px 3px 0px 3px;
+  }
+</style><svg style="display:none;" width="16px" height="16px" viewBox="0 0 16 16" version="1.1"
+  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <path id="checked-checkbox-id"
+      d="M17,3 L4.75,3 C3.77875,3 3,3.7875 3,4.75 L3,17 C3,17.9625 3.77875,18.75 4.75,18.75 L17,18.75 C17.97125,18.75 18.75,17.9625 18.75,17 L18.75,4.75 C18.75,3.7875 17.97125,3 17,3 L17,3 Z M9.125,15.25 L4.75,10.875 L5.98375,9.64125 L9.125,12.77375 L15.76625,6.1325 L17,7.375 L9.125,15.25 L9.125,15.25 Z"
+      transform="translate(-3.000000, -3.000000)"></path>
+    <path id="unchecked-checkbox-id"
+      d="M17,3.75 L17,16 L4.75,16 L4.75,3.75 L17,3.75 L17,3.75 Z M17,2 L4.75,2 C3.7875,2 3,2.7875 3,3.75 L3,16 C3,16.9625 3.7875,17.75 4.75,17.75 L17,17.75 C17.9625,17.75 18.75,16.9625 18.75,16 L18.75,3.75 C18.75,2.7875 17.9625,2 17,2 L17,2 Z"
+      transform="translate(-3.000000, -2.000000)"></path>
+  </defs>
+</svg>
+<div class="ritz grid-container" dir="ltr">
+  <table class="waffle no-grid" cellspacing="0" cellpadding="0">
+    <tbody>
+      <tr style="height: 19px">
+        <td class="s0">
+          <div style="width:194px;height:80px;"><img src="cid:pntLogo" style="width:inherit;height:inherit;object-fit:scale-down;object-position:left top;"/>
+          </div>
+        </td>
+        <td class="s1" dir="ltr" colspan="3">Pacific Net &amp; Twine Ltd. <br>2023 Booking Program</td>
+      </tr>
+      <tr style="height: 16px">
+        <td class="s2" dir="ltr" colspan="4"></td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          Hi <?= contactName ?>
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" colspan="4">
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          Thank you for placing a booking order with us. Please see the attached order confirmation.
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" colspan="4">
+          Your personal sales representative is <?= salesRep ?> and his direct phone number is <?= phoneNum ?>.
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+        </td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s3" dir="ltr"></td>
+        <td class="s4" dir="ltr"></td>
+        <td class="s3" dir="ltr"></td>
+        <td></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s5" dir="ltr" rowspan="2">Customer PO#</td>
+        <td class="s6" dir="ltr" rowspan="2"><?= poNum ?></td>
+        <td class="s7" dir="ltr">Customer</td>
+        <td class="s8" dir="ltr"><?= customer ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s7" dir="ltr">Address</td>
+        <td class="s8" dir="ltr"><?= address ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s7" dir="ltr">Orders must be submitted</td>
+        <td class="s10" dir="ltr">BY TUESDAY, NOVEMBER 1st, 2022</td>
+        <td class="s7" dir="ltr">City</td>
+        <td class="s8" dir="ltr"><?= city ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s7" dir="ltr">Terms</td>
+        <td class="s10" dir="ltr">TERMS: NET 60 DAYS</td>
+        <td class="s7" dir="ltr">Province</td>
+        <td class="s8" dir="ltr"><?= province ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s7" dir="ltr">Freight</td>
+        <td class="s10" dir="ltr">F.O.B. RICHMOND, BC</td>
+        <td class="s7" dir="ltr">Postal Code</td>
+        <td class="s8" dir="ltr"><?= postalCode ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s11" dir="ltr" rowspan="2">Provide your preferred<br>carrier here or:</td>
+        <td class="s12" dir="ltr" rowspan="2"><?= carrier ?></td>
+        <td class="s7" dir="ltr">Contact</td>
+        <td class="s8" dir="ltr"><?= contact ?></td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s7" dir="ltr">Phone</td>
+        <td class="s8" dir="ltr"><?= phone ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s7" dir="ltr"></td>
+        <td class="s13" dir="ltr"></td>
+        <td class="s7" dir="ltr">Email</td>
+        <td class="s8" dir="ltr"><?= email ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s7" dir="ltr">Order Total</td>
+        <td class="s14" dir="ltr" rowspan="2">$<?= total ?></td>
+        <td class="s7" dir="ltr">Account #</td>
+        <td class="s8" dir="ltr"><?= accountNum ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s15" dir="ltr">(Before Freight)</td>
+        <td class="s15" dir="ltr">Sales Rep</td>
+        <td class="s8" dir="ltr"><?= salesRep ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td></td>
+        <td class="s16"></td>
+        <td class="s17" dir="ltr"></td>
+        <td class="s16" dir="ltr"></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s18" dir="ltr" colspan="4">ALL PRICES IN CANADIAN DOLLARS</td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s19" dir="ltr" colspan="4">ALL BACKORDERS WILL BE SHIPPED WHEN AVAILABLE UNLESS CANCELLED PRIOR TO
+          SHIPPING</td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s19" dir="ltr" colspan="4">BOOKINGS WILL SHIP FEBUARY 15 - MAY 1, 2023 UNLESS PREVIOUSLY DISCUSSED
+          WITH PACIFIC NET AND TWINE LTD.**</td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s19" dir="ltr" colspan="4">** SHIPPING WILL BE BASED ON PRODUCT AVAILABLITY. CUSTOMER WILL BE
+          NOTIFIED IS THERE ARE ANY UNEXPECTED DELAYS.</td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s20" dir="ltr"></td>
+        <td class="s21" dir="ltr"></td>
+        <td class="s21" dir="ltr"></td>
+        <td class="s21" dir="ltr"></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s22" dir="ltr" colspan="4">Due to rapid changes in costs to materials and shipping. Prices are
+          subject to change at any time.</td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s21" dir="ltr"></td>
+        <td class="s21" dir="ltr"></td>
+        <td class="s21" dir="ltr"></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s24" dir="ltr">Additional Order Comments</td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments1 ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments2 ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments3 ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments4 ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments5 ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments6 ?></td>
+      </tr>
+      <tr style="height: 18px">
+        <td class="s23" dir="ltr"></td>
+        <td class="s25" dir="ltr" colspan="3"><?= comments7 ?></td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" colspan="4">
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          Thank You
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          Pacific Net & Twine
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          3731 Moncton Street
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          Richmond, BC V7E 3A5
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          <a href="tel:604-274-7238">604-274-7238</a>
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          <a href="tel:1-800-895-4327">1-800-895-4327</a>
+        </td>
+      </tr>
+      <tr style="height: 19px">
+        <td class="s30" dir="ltr" colspan="4">
+          <a href="https://pacificnetandtwine.com/">www.pacificnetandtwine.com</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
