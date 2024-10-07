@@ -13,24 +13,23 @@ function onChange(e)
 
   if (e.changeType === 'OTHER' && sheet.getSheetName() === 'Dashboard')
   {
-    const range = sheet.getDataRange()
+    const range = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn() - 1) // Exclude the header and the checkboxes
     const values = range.getValues()
     var ss = '';
 
-    values[0][1] = '=\"URLs                                           Booking Totals: $\"&TEXT(ROUND(SUM(D2:D)),\"#,###\")'
-
     for (var row = 1; row < values.length; row++)
     {
-      if (values[row][2] === true && !values[row][4] && !ss) // Only enter this conditional once per execution
+      if (values[row][2] === true && !values[row][4] && !ss) // Is order complete is true, and there is no email has been sent yet 
       {
         ss = SpreadsheetApp.openByUrl(values[row][1])
-        DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.DOMAIN, DriveApp.Permission.NONE)
-        fancyEmailBookingOrder(ss)//emailBookingOrder(ss)
-        values[row][4] = 'Yes';
-        values[row][5] = Utilities.formatDate(new Date(), e.source.getSpreadsheetTimeZone(), "EEE, d MMM  h:mm:ss a")
+        DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.DOMAIN, DriveApp.Permission.NONE) // Remove the edit access for the customer
+        //emailBookingOrder(ss) // Email the customer their order confirmation as well as pnt employess and AJ the Adagio csv
+        values[row][4] = 'Yes'; // Is email sent? set to 'Yes'
+        values[row][5] = Utilities.formatDate(new Date(), e.source.getSpreadsheetTimeZone(), "EEE, d MMM  h:mm:ss a") // Timestamp
       }
 
-       if (isNotBlank(values[row][1]))
+      // Since we are setting the values at the bottom, we need to reset the formulas each time this function runs
+      if (isNotBlank(values[row][1])) // URL is not blank
       {
         values[row][2] = '=IMPORTRANGE(\"' + values[row][1] + '\", \"\'BOOKING PROGRAM\'!D30\")' 
         values[row][3] = '=IF(EQ(IMPORTRANGE(\"' + values[row][1] + '\", \"\'BOOKING PROGRAM\'!B12\"), 0), "",IMPORTRANGE(\"' + values[row][1] + '\", \"\'BOOKING PROGRAM\'!B12\"))'
@@ -64,7 +63,7 @@ function installedOnEdit(e)
   {
     if (row === range.rowEnd && row > 1) // Single Cell & Data below the header
     {
-      if (col === 2) // A URL has changed in the spreadsheet
+      if (col === 2) // A URL has changed in the spreadsheet, therefore set the importrange formula
       {
         const spreadsheet = e.source;
         const url = spreadsheet.getSheetValues(row, 2, 1, 1)[0][0];
@@ -77,11 +76,11 @@ function installedOnEdit(e)
       {
         const isOrderSubmitted = !range.offset(0, -2, 1, 2).isBlank();
 
-        if (isOrderSubmitted)
+        if (isOrderSubmitted) // Unlock the customers spreadsheet so that they can keep editing 
         {
-          const rng = range.offset(0, -5, 1, 5);
+          const rng = range.offset(0, -5, 1, 5); // Relavant data from the Dashboard, include url
           const values = rng.getValues();
-          const ss = SpreadsheetApp.openByUrl(values[0][0])
+          const ss = SpreadsheetApp.openByUrl(values[0][0]) 
           
           ss.getRange('BOOKING PROGRAM!A30').uncheck()
           ss.getRange('BOOKING PROGRAM!D30').uncheck()
@@ -90,21 +89,21 @@ function installedOnEdit(e)
           values[0][2] = '=IF(EQ(IMPORTRANGE(\"' + values[0][0] + '\", \"\'BOOKING PROGRAM\'!B12\"), 0), "",IMPORTRANGE(\"' + values[0][0] + '\", \"\'BOOKING PROGRAM\'!B12\"))'
           values[0][3] = ''
           values[0][4] = ''
-          DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT)
+          DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT) // Give the customer back edit access
           rng.setValues(values)
           range.uncheck()
           e.source.toast('Access has been granted to anyone with a link to the spreadsheet')
         }
-        else
+        else // This code block "prepares" the spreadsheet for the customer
         {
-          e.source.toast('Preparing booking program...')
+          e.source.toast('Preparing booking program...', -1)
           const url = range.offset(0, -5, 1, 1).getValues()[0][0]
           const ss = SpreadsheetApp.openByUrl(url)
           const sheets = ss.getSheets();
           const users = ss.getEditors()
           var sheetName = '', customerName = ''
 
-          DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT)
+          DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT) // Give anyone with a link permission to edit the spreadsheet
 
           for (var s = 0; s < sheets.length; s++)
           {
@@ -114,58 +113,64 @@ function installedOnEdit(e)
             {
               customerName = sheets[s].getRange(4, 4).setDataValidation(null).getValue(); // Remove the data validation from the customer cell
               const customer = sheets[s].getRange(5, 4, 9);
-              customer.setValues(customer.getValues());
+              customer.setValues(customer.getValues()); // Remove the formulas that generate the customer data by pasting values into the cells
               const ssName = ss.getName();
 
               if (ssName.split(' - ').length < 2)
-                ss.setName(ss.getName() + ' - ' + customerName)
+                ss.setName(ss.getName() + ' - ' + customerName) // Rename the spreadsheet with the companies name
               
               sheets[s].protect().addEditors(users).setUnprotectedRanges([
-                sheets[s].getRange('A30'),
-                sheets[s].getRange('D30'),
-                sheets[s].getRange('B4:B5'), 
-                sheets[s].getRange('B22:D28'), 
-                sheets[s].getRange('B9:B10')
+                sheets[s].getRange('A30'),     // Submission checkbox
+                sheets[s].getRange('D30'),     // Hidden checkbox
+                sheets[s].getRange('B4:B5'),   // PO number
+                sheets[s].getRange('B22:D28'), // Additional Order Comments
+                sheets[s].getRange('B9:B10')   // Carrier of choice
               ])
             }
-            else if (sheetName === 'ORDER FORM')
+            else if (sheetName === 'Order Form'               || sheetName === 'Order Form (Hoochies)' || 
+                     sheetName === 'Order Form (Golden Bait)' || sheetName === 'Order Form (Clearance)')
             {
-              const rowStart = 5;
-              const rng = sheets[s].getRange(rowStart, 4, sheets[s].getLastRow() - rowStart + 1, 5)
-              const values = rng.getValues() 
-              var ranges = [sheets[s].getRange(2, 1)], numRows = 0;
+              const rowStart = 19;
+              const rng = sheets[s].getRange(rowStart, 4, sheets[s].getLastRow() - rowStart + 1, 6)
+              const values = rng.getValues() // Remove the formulas by pasting values in the cells
+              var ranges = [sheets[s].getRange(2, 1), sheets[s].getRange(2, 11)], numRows = 0;
               rng.setValues(values) // Remove the formulas that are no longer needed
 
+              // Gather all of the order quantity ranges that need to be editable by the customer
               for (var i = 0; i < values.length; i++)
               {
-                if (isNotBlank(values[i][3]))
+                if (isNotBlank(values[i][3])) // If cell value is not blank then increment the counter
                   numRows++;
-                else if(numRows !== 0)
+                else if (numRows !== 0) // If cell value is blank and the number of rows is nonzero then we have reached the end of the current range that should be made unprotected
                 {
                   ranges.push(sheets[s].getRange(i - numRows + rowStart, 9, numRows))
                   numRows = 0;
                 }
               }
 
-              sheets[s].protect().addEditors(users).setUnprotectedRanges(ranges);
+              sheets[s].protect().addEditors(users).setUnprotectedRanges(ranges); // Set all of the unprotected ranges, including the checkbox and the order quantity column
             }
-            else if (sheetName === 'ORDER CONFIRMATION' || sheetName === 'Export')
-              sheets[s].hideSheet().protect().addEditors(users).setUnprotectedRanges([sheets[s].getRange('A4')]);
+            else if (sheetName === 'ORDER CONFIRMATION')
+              sheets[s].hideSheet().protect().addEditors(users).setUnprotectedRanges([sheets[s].getRange('A4')]); // Hide the ORDER CONFIRMATION sheet
+            else if (sheetName === 'Export')
+              sheets[s].hideSheet().protect().addEditors(users).setUnprotectedRanges([sheets[s].getRange('A2:D500')]); // Hide the Export sheet
             else
-              ss.deleteSheet(sheets[s]);
+              ss.deleteSheet(sheets[s]); // Remove unnecessary sheets
           }
 
-          ss.getRange('BOOKING PROGRAM!A30').insertCheckboxes().setNumberFormat('0.###############').uncheck()
+          ss.getRange('BOOKING PROGRAM!A30').insertCheckboxes().setNumberFormat('0.###############').uncheck() // Make sure checkboxes are on the spreadsheet
           ss.getRange('BOOKING PROGRAM!D30').insertCheckboxes().setNumberFormat('0.###############').setFontSize(2).setFontColor('white')
-            .setBackground('white').setHorizontalAlignment('right').setVerticalAlignment('bottom').uncheck()
-          ss.getRange('ORDER FORM!A2').insertCheckboxes().setNumberFormat('0.###############').uncheck()
-          range.offset(0, -6, 1, 1).setValue(customerName)
-          range.uncheck()
+            .setBackground('white').setHorizontalAlignment('right').setVerticalAlignment('bottom').uncheck();
+          ss.getRange('ORDER FORM!A2').insertCheckboxes().setNumberFormat('0.###############').uncheck();
+          ss.getRange('Order Form (Golden Bait)!A2').insertCheckboxes().setNumberFormat('0.###############').uncheck();
+          ss.getRange('Order Form (Hoochies)!A2').insertCheckboxes().setNumberFormat('0.###############').uncheck();
+          ss.getRange('Order Form (Clearance)!A2').insertCheckboxes().setNumberFormat('0.###############').uncheck();
+          range.uncheck().offset(0, -6, 1, 1).setValue(customerName); // Set the customer name on the Dashboard sheet
           e.source.toast('Formulas removed, pages deleted or hidden, spreadsheet protected and now editable by anyone with a link.', customerName, 20)
         }
       }
     }
-    else if (col === 2 && row > 1)
+    else if (col === 2 && row > 1) // Multiple URLs have been pasted into the spreadsheet, therefore set the importrange formulas
     {
       const spreadsheet = e.source;
       const urls = spreadsheet.getSheetValues(row, col, range.rowEnd - row + 1, 1);
@@ -178,17 +183,33 @@ function installedOnEdit(e)
   }
 }
 
+/**
+ * This function runs the simple onOpen trigger that creates a menu item called Booking Program Controls, the contains several functions that the owner 
+ * may use to operate the spreadsheet.
+ * 
+ * @author Jarren Ralf
+ */
 function onOpen()
 {
   SpreadsheetApp.getUi().createMenu('Booking Program Controls')
     .addItem('Create Spreadsheets', 'createBookingSpreadsheets')
-    .addItem('Create Price Change Trigger', 'createTriggerForPriceChange')
+    .addItem('Email Select URLs to Customers', 'emailLinksToCustomers')
+    .addItem('Email All URLs to PNT Employees', 'emailLinksToPntEmployees')
+    // .addItem('Create Price Change Trigger', 'createTriggerForPriceChange')
+    // .addSeparator()
+    // .addItem('Get Section Headers', 'getSections')
+    // .addItem('Remove Sections', 'removeSections')
     .addSeparator()
-    .addItem('Get Section Headers', 'getSections')
-    .addItem('Remove Sections', 'removeSections')
+    .addItem('Email Adrian Adagio Export for Selected Customer(s)', 'emailSelectedSpreadsheetToAJ')
     .addToUi()
 }
 
+/**
+ * This function changes the price for the customer from the booking price to their regular discounted price. This function will run on a trigger when the customers
+ * are 7 days past the order deadline.
+ * 
+ * @author Jarren Ralf
+ */
 function changePricing()
 {
   SpreadsheetApp.getActive().getRange('B2:C').getValues().map(url => 
@@ -196,148 +217,147 @@ function changePricing()
   )
 }
 
+/**
+ * This function creates the booking spreadsheets from current master copy. It duplicates the spreadsheet, renames it to include the customer name, and removes 
+ * the data validation on the first sheet so that the reference to the customer can't be changed by any of the users. This function also contains the feature
+ * that if runtime is going to exceed 6 minutes, the limit for google apps script, then the script creates a trigger that will re-run this function a few minutes later.
+ * This function creates the spreadsheets in a for-loop and if runtime will exceed 6 minutes, it stores the current value of the loop's incrementing variable in 
+ * Google's CacheService, which stores string data that will expire after 6 minutes. On rerun, the function can call on the cache and resume within the for-loop
+ * where the script was last stopped.
+ * 
+ * @author Jarren Ralf
+ */
 function createBookingSpreadsheets()
 {
-  if (true)
-    Browser.msgBox('You can\'t spreadsheets anymore becasue the spreadsheets have already been distributed to customers.')
-  else
+  try
   {
-    const activeUsersEmail = Session.getActiveUser().getEmail();
+    const startTime = new Date(); // The start time of this function
+    const activeUsersEmail = Session.getEffectiveUser().getEmail();
 
     if (activeUsersEmail !== 'jarrencralf@gmail.com' && activeUsersEmail !== 'adriangatewood@gmail.com')
       Browser.msgBox('Only Adrian and Jarren have permission to run this function.')
     else
     {
-      const sheet = SpreadsheetApp.getActiveSheet();
-      const originalSS_Url = sheet.getRange(2, 2).getValue();
-      const originalSS = SpreadsheetApp.openByUrl(originalSS_Url);
+      /* Notice that some of the declared variables below are not saved into memory as constants, this is because through troubleshooting it was found that when an error
+      * occurs in the script, the execution in the catch clause throws an error and states that the variables are uninitialized. When the initializations were changed to var
+      * the catch clause script reads all of the variables properly.
+      */
+      const MAX_RUNNING_TIME = 300000; // Five minutes
+      var REASONABLE_TIME_TO_WAIT = 60000; // One Minute
+      var sheet = SpreadsheetApp.getActive().getSheetByName('Dashboard');
+      const originalSS = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1EAUG08kCsNRcBUXOru5ZGxNg_S3NLMwcppnE5AXANSs/edit"); // Original booking spreadsheet
       const customersSheet = originalSS.getSheetByName('Customers');
-      const customers = customersSheet.getSheetValues(2, 1, customersSheet.getLastRow() - 1, 1);
-      var urls = [], url = '', ss;
+      var numCustomers = customersSheet.getLastRow() - 1
+      const customers = customersSheet.getSheetValues(2, 1, numCustomers, 1);
+      var cache = CacheService.getDocumentCache();
+      var urls = [];
+      var ss, currentTime, url = '';
 
-      customers.map( customer => {
-        ss = originalSS.copy('Pacific Net & Twine Ltd. 2024 Booking Program - ' + customer[0])
-        ss.getSheetByName('BOOKING PROGRAM').getRange(4, 4).setDataValidation(null).setValue(customer[0])
-        url = ss.getUrl()
+      // Create the spreadsheets, notice that the index varibale needs to be converted to a number since the Cache stores data as string values
+      for (var customer = Number(cache.get('current_customer')); customer < numCustomers; customer++)
+      {
+        currentTime = new Date().getTime();
+        
+        if(currentTime - startTime >= MAX_RUNNING_TIME) // If the function has been running for more than 5 minutes, then set the trigger to run this function again in a few minutes
+        {
+          cache.put('current_customer', customer.toString()); // Store the indexing variable
+          sheet.getRange(getLastRowSpecial(sheet.getRange('B:B').getValues()) + 1, 2, urls.length, 3).setValues(urls); // Set the URLs that have been generated so far
 
-        return urls.push([url, '=IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!D30\")', 
-          '=IF(EQ(IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!B12\"), 0), "",IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!B12\"))'])
-      })
-      sheet.getRange(2, 2, customers.length, 3).setValues(urls);
+          var triggerDate = new Date(currentTime + REASONABLE_TIME_TO_WAIT); // Set a trigger for a point in the future
+          Logger.log('Next Trigger will run at:')
+          Logger.log(triggerDate)
+
+          ScriptApp.newTrigger("createBookingSpreadsheets").timeBased().at(triggerDate).create();
+          break;
+        }
+        else
+        {
+          ss = originalSS.copy('Pacific Net & Twine Ltd. 2025 Booking Program - ' + customers[customer][0]) // Add customer name to the spreadsheet name
+          ss.getSheetByName('BOOKING PROGRAM').getRange(4, 4).setDataValidation(null).setValue(customers[customer][0]) // Remove data validation so a different customer can't be selected
+          url = ss.getUrl()
+          urls.push([url, '=IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!D30\")', // Build the import range formulas
+            '=IF(EQ(IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!B12\"), 0), "",IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!B12\"))'])
+        }
+      }
+
+      if (customer === numCustomers) // The total number of spreadsheets has been created
+      {
+        const allUrls = sheet.getRange('B:B').getValues(); // All of the urls that are currently pasted on the spreadsheet (if any)
+        sheet.getRange(getLastRowSpecial(allUrls) + 1, 2, urls.length, 3).setValues(urls); // Add the latest set of urls
+        allUrls.shift() // Remove the header
+        const numRows = allUrls.length
+
+        // The range B:B may contain cells at the end of the array that are blank, so remove them if they exist
+        for (var i = 0; i < numRows; i++)
+        {
+          if (allUrls[allUrls.length - 1][0] === '')
+            allUrls.pop() 
+        }
+
+        urls.map(url => allUrls.push([url[0]])) // Add the latest set of urls to the previous urls
+
+        // Email PNT employess with links to all of the newly created spreadsheets
+        //emailLinksToPntEmployees(getSections(originalSS, allUrls)) // getSections() return a list of URLs AND the names of the customers for each of the sheets
+        //createTriggerForPriceChange() // This creates the trigger than will change the pricing from the additional 5% off for booking to the customer's regular discount
+      }
+    }
+  }
+  catch (err)
+  {
+    var error = err['stack'];
+    Logger.log(error)
+
+    if (customer !== numCustomers)// If there are still more spreadsheets to create
+    {
+      var triggerDate = new Date(currentTime + REASONABLE_TIME_TO_WAIT); 
+      
+      Logger.log('Next Trigger will run at:')
+      Logger.log(triggerDate)
+
+      ScriptApp.newTrigger("createBookingSpreadsheets").timeBased().at(triggerDate).create(); // Create a new trigger and try running the function again
+
+      if (urls.length !== 0)
+        sheet.getRange(getLastRowSpecial(sheet.getRange('B:B').getValues()) + 1, 2, urls.length, 3).setValues(urls);
+
+      cache.put('current_customer', customer.toString()); // Store the current position of the for-loop iterate
     }
   }
 }
 
-function createTriggerForPriceChange()
-{
-  const url = SpreadsheetApp.getActive().getSheetByName('Dashboard').getSheetValues(2, 2, 1, 1)[0][0];
-  const submissionBy = SpreadsheetApp.openByUrl(url).getSheetByName('BOOKING PROGRAM').getSheetValues(6, 2, 1, 1)[0][0].split(', ');
-  const months = {'JANUARY': 1, 'FEBRUARY': 2, 'MARCH': 3, 'APRIL': 4, 'MAY': 5, 'JUNE': 6, 'JULY': 7, 'AUGUST': 8, 'SEPTEMBER': 9, 'OCTOBER': 10, 'NOVEMBER': 11, 'DECEMBER': 12};
-
-  const year = (submissionBy[submissionBy.length - 1].length === 4) ? submissionBy[submissionBy.length - 1] : new Date().getFullYear()
-  const month = months[submissionBy[submissionBy.length - 2].split(' ', 1)[0]]
-  const day = Number(submissionBy[submissionBy.length - 2].replace(/\D/g, '')) + 7
+// /**
+//  * This function creates the trigger that will change the price of the customer's spreadsheet from the additonal 5% of for booking orders to their original discount. 
+//  * 
+//  * @author Jarren Ralf
+//  */
+// function createTriggerForPriceChange()
+// {
+//   const activeUsersEmail = Session.getEffectiveUser().getEmail();
   
-  ScriptApp.newTrigger('changePricing').timeBased().atDate(year, month, day).create()
-}
+//   if (activeUsersEmail !== 'jarrencralf@gmail.com' && activeUsersEmail !== 'adriangatewood@gmail.com')
+//     Browser.msgBox('Only Adrian and Jarren have permission to run this function.')
+//   else
+//   {
+//     const submissionBy = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1RMsGXaAumkvGdNbSfFhqCiAE07MAg6TWpyHN0PPzZgo/edit")
+//       .getSheetByName('BOOKING PROGRAM').getSheetValues(6, 2, 1, 1)[0][0].split(', ');
+//     const months = {'JANUARY': 1, 'FEBRUARY': 2, 'MARCH': 3, 'APRIL': 4, 'MAY': 5, 'JUNE': 6, 'JULY': 7, 'AUGUST': 8, 'SEPTEMBER': 9, 'OCTOBER': 10, 'NOVEMBER': 11, 'DECEMBER': 12};
 
-function testEmails()
-{
-  spreadsheet = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1Ndlow31wOBnx5I9cRDk7j_ys2B9ViWWlJu-JeVkS3qU/edit#gid=2140966653");
-  emailBookingOrder(spreadsheet)
-}
+//     // Use the submission date to generate the date for the trigger
+//     const year = (submissionBy[submissionBy.length - 1].length === 4) ? submissionBy[submissionBy.length - 1] : new Date().getFullYear()
+//     const month = months[submissionBy[submissionBy.length - 2].split(' ', 1)[0]]
+//     const day = Number(submissionBy[submissionBy.length - 2].replace(/\D/g, '')) + 7
+    
+//     ScriptApp.newTrigger('changePricing').timeBased().atDate(year, month, day).create()
+//   }
+// }
 
 /**
- * This function .... 
+ * This function emails the order confirmation to the customer while sending a blind carbon copy (bcc) to the pnt employees, as well as an additional email to AJ which 
+ * contains the adagio export csv file.
  * 
- * @param {Spreadsheet} spreadsheet : The ...
+ * @param {Spreadsheet} spreadsheet : The active spreadsheet
  * @author Jarren Ralf
  */
 function emailBookingOrder(spreadsheet)
-{
-  const exportSheet = spreadsheet.getSheetByName('Export')
-  const orderInformationSheet = spreadsheet.getSheetByName('BOOKING PROGRAM')
-  const orderConfirmationSheet = spreadsheet.getSheetByName('ORDER CONFIRMATION')
-  
-  const customerValues = orderInformationSheet.getSheetValues(4, 2, 10, 3)
-  const poNum = customerValues[0][0]
-  const customer = customerValues[0][2]
-  const pntSalesRep = customerValues[9][2];
-  const contactName = (isNotBlank(customerValues[5][2])) ? customerValues[5][2].split(' ', 1)[0] : customer; // Contact's first name, or the business name (if contact is blank)
-  var pntSalesRepEmail = '', pntSalesRepPhoneNum = '';
-
-  const recipientEmail = customerValues[7][2];
-
-  switch (pntSalesRep)
-  {
-    case "Kris Nakashima":
-      pntSalesRepEmail = 'kris@pacificnetandtwine.com'
-      pntSalesRepPhoneNum = '604-370-7325'
-      break;
-    case "Mark Westerlaken":
-      pntSalesRepEmail = 'mark@pacificnetandtwine.com'
-      pntSalesRepPhoneNum = '604-370-7326'
-      break;
-    case "Derrick Mizuyabu":
-      pntSalesRepEmail = 'dmizuyabu@pacificnetandtwine.com';
-      pntSalesRepPhoneNum = '604-370-7327'
-      break;
-    case "Brent Kondo":
-      pntSalesRepEmail = 'brent@pacificnetandtwine.com'
-      pntSalesRepPhoneNum = '604-370-7328'
-      break;
-  }
-
-  var templateHtml = HtmlService.createTemplateFromFile('email');
-  templateHtml.salesRep = pntSalesRep;
-  templateHtml.phoneNum = pntSalesRepPhoneNum;
-  templateHtml.contactName = contactName;
-
-  const blindRecipients = "kris@pacificnetandtwine.com, mark@pacificnetandtwine.com, dmizuyabu@pacificnetandtwine.com, brent@pacificnetandtwine.com"
-  var emailSubject = 'Booking Order for ' + poNum + ' confirmed';
-  var emailSignature = '<p>If you have any questions, please click reply or send an email to: <a href="mailto:' + pntSalesRepEmail + '?subject=Booking Order for ' + 
-    poNum + ' placed by ' + customer + '">' + pntSalesRepEmail + '</a></p>'
-  var message = templateHtml.evaluate().append(emailSignature).getContent(); // Get the contents of the html document
-
-  var      adagioExportCsv = getAsBlob(spreadsheet,            exportSheet).setName(customer + ' ' + poNum + ".csv")
-  var  orderInformationPdf = getAsBlob(spreadsheet,  orderInformationSheet).setName(customer + ' ' + poNum + " Booking Information.pdf")
-  var orderConfirmationPdf = getAsBlob(spreadsheet, orderConfirmationSheet).setName(customer + ' ' + poNum + " Order Confirmation.pdf")
-  const attachments = [orderInformationPdf, orderConfirmationPdf];
-
-  // Send an email with following chosen parameters to the customer and to the relevant people at PNT
-  GmailApp.sendEmail(recipientEmail, 
-                      emailSubject, 
-                      '',
-                    {   replyTo: pntSalesRepEmail,
-                            bcc: blindRecipients,
-                           from: 'pntnoreply@gmail.com',
-                           name: 'PNT Sales',
-                       htmlBody: message,
-                    attachments: attachments
-  });
-
-  attachments.push(adagioExportCsv)
-
-  // Send an email to AJ that will also include the csv file to
-  GmailApp.sendEmail('adrian@pacificnetandtwine.com', 
-                      emailSubject, 
-                      '',
-                    {   replyTo: pntSalesRepEmail,
-                            bcc: 'lb_blitz_allstar@hotmail.com',
-                           from: 'pntnoreply@gmail.com',
-                           name: 'PNT Sales',
-                       htmlBody: message,
-                    attachments: attachments
-  });
-}
-
-/**
- * This function .... 
- * 
- * @param {Spreadsheet} spreadsheet : The ...
- * @author Jarren Ralf
- */
-function fancyEmailBookingOrder(spreadsheet)
 {
   const exportSheet = spreadsheet.getSheetByName('Export')
   const orderInformationSheet = spreadsheet.getSheetByName('BOOKING PROGRAM')
@@ -352,7 +372,7 @@ function fancyEmailBookingOrder(spreadsheet)
 
   const recipientEmail = customerValues[7][2]; // The email will be send to this address
 
-  switch (pntSalesRep)
+  switch (pntSalesRep) // Set the pntSalesRepEmail and pntSalesRepPhoneNum variables appropriately based on the sales rep.
   {
     case "Kris Nakashima":
       pntSalesRepEmail = 'kris@pacificnetandtwine.com'
@@ -372,7 +392,8 @@ function fancyEmailBookingOrder(spreadsheet)
       break;
   }
 
-  var templateHtml = HtmlService.createTemplateFromFile('fancyEmail');
+  // Set all of the variables for the html template
+  var templateHtml = HtmlService.createTemplateFromFile('emailConfirmation');
   templateHtml.contactName = contactName;
   templateHtml.salesRep = pntSalesRep;
   templateHtml.phoneNum = pntSalesRepPhoneNum;
@@ -396,7 +417,6 @@ function fancyEmailBookingOrder(spreadsheet)
   templateHtml.comments6 = customerValues[23][0];
   templateHtml.comments7 = customerValues[24][0];
 
-
   const blindRecipients = "kris@pacificnetandtwine.com, mark@pacificnetandtwine.com, dmizuyabu@pacificnetandtwine.com, brent@pacificnetandtwine.com"
   var emailSubject = 'Booking Order for PO# ' + poNum + ' confirmed';
   var emailSignature = '<p>If you have any questions, please click reply or send an email to: <a href="mailto:' + pntSalesRepEmail + '?subject=Booking Order for PO# ' + 
@@ -406,16 +426,16 @@ function fancyEmailBookingOrder(spreadsheet)
   var      adagioExportCsv = getAsBlob(spreadsheet,            exportSheet).setName(customer + ' PO# ' + poNum + ".csv")
   var orderConfirmationPdf = getAsBlob(spreadsheet, orderConfirmationSheet).setName(customer + ' PO# ' + poNum + " Order Confirmation.pdf")
   const attachments = [orderConfirmationPdf];
-  const image = {"pntLogo": UrlFetchApp.fetch("https://cdn.shopify.com/s/files/1/0018/7079/0771/files/logoh_180x@2x.png?v=1613694206").getBlob()}
+  const image = {"pntLogo": UrlFetchApp.fetch("https://cdn.shopify.com/s/files/1/0018/7079/0771/files/logoh_180x@2x.png?v=1613694206").getBlob()} // PNT Logo
 
   // Send an email with following chosen parameters to the customer and to the relevant people at PNT
   GmailApp.sendEmail(recipientEmail, 
                       emailSubject, 
                       '',
                     {   replyTo: pntSalesRepEmail,
-                            bcc: blindRecipients,
-                           from: 'pntnoreply@gmail.com',
-                           name: 'PNT Sales',
+                            //bcc: blindRecipients,
+                           //from: 'pntnoreply@gmail.com',
+                           //name: 'PNT Sales',
                        htmlBody: message,
                     attachments: attachments,
                    inlineImages: image
@@ -424,17 +444,309 @@ function fancyEmailBookingOrder(spreadsheet)
   attachments.push(adagioExportCsv)
 
   // Send an email to AJ that will also include the csv file to
-  GmailApp.sendEmail('adrian@pacificnetandtwine.com',
+  GmailApp.sendEmail('triteswarehouse@gmail.com',//'adrian@pacificnetandtwine.com',
                       emailSubject, 
                       '',
                     {   replyTo: pntSalesRepEmail,
-                            bcc: 'lb_blitz_allstar@hotmail.com',
-                           from: 'pntnoreply@gmail.com',
-                           name: 'PNT Sales',
+                            //bcc: 'lb_blitz_allstar@hotmail.com',
+                           //from: 'pntnoreply@gmail.com',
+                           //name: 'PNT Sales',
                        htmlBody: message,
                     attachments: attachments,
                    inlineImages: image
   });
+}
+
+/**
+ * This function emails the adagio export csv file to Adrian.
+ * 
+ * @param {Spreadsheet} spreadsheet : The active spreadsheet
+ * @author Jarren Ralf
+ */
+function emailAdrianAdagioExportCsv(spreadsheet, exportSheet, masterBookingSpreadsheet)
+{
+  if (arguments.length <= 1)
+    var exportSheet = spreadsheet.getSheetByName('Export')
+
+  const orderInformationSheet = spreadsheet.getSheetByName('BOOKING PROGRAM')
+  const customerValues = orderInformationSheet.getSheetValues(4, 2, 25, 3)
+  const poNum = customerValues[0][0]
+  const customer = customerValues[0][2]
+  const pntSalesRep = customerValues[9][2];
+  const contactName = (isNotBlank(customerValues[5][2])) ? customerValues[5][2].split(' ', 1)[0] : customer; // Contact's first name, or the business name (if contact is blank)
+  var pntSalesRepEmail = '', pntSalesRepPhoneNum = '';
+
+  const recipientEmail = customerValues[7][2]; // The email will be send to this address
+
+  switch (pntSalesRep) // Set the pntSalesRepEmail and pntSalesRepPhoneNum variables appropriately based on the sales rep.
+  {
+    case "Kris Nakashima":
+      pntSalesRepEmail = 'kris@pacificnetandtwine.com'
+      pntSalesRepPhoneNum = '604-370-7325'
+      break;
+    case "Mark Westerlaken":
+      pntSalesRepEmail = 'mark@pacificnetandtwine.com'
+      pntSalesRepPhoneNum = '604-370-7326'
+      break;
+    case "Derrick Mizuyabu":
+      pntSalesRepEmail = 'dmizuyabu@pacificnetandtwine.com';
+      pntSalesRepPhoneNum = '604-370-7327'
+      break;
+    case "Brent Kondo":
+      pntSalesRepEmail = 'brent@pacificnetandtwine.com'
+      pntSalesRepPhoneNum = '604-370-7328'
+      break;
+  }
+
+  // Set all of the variables for the html template
+  var templateHtml = HtmlService.createTemplateFromFile('emailConfirmation');
+  templateHtml.contactName = contactName;
+  templateHtml.salesRep = pntSalesRep;
+  templateHtml.phoneNum = pntSalesRepPhoneNum;
+  templateHtml.poNum = poNum;
+  templateHtml.carrier = customerValues[5][0];
+  templateHtml.total = Math.round((customerValues[8][0] + Number.EPSILON) * 100) / 100;
+  templateHtml.customer = customer;
+  templateHtml.address = customerValues[1][2];
+  templateHtml.city = customerValues[2][2];
+  templateHtml.province = customerValues[3][2];
+  templateHtml.postalCode = customerValues[4][2];
+  templateHtml.contact = customerValues[5][2];
+  templateHtml.phone = customerValues[6][2];
+  templateHtml.email = recipientEmail;
+  templateHtml.accountNum = customerValues[8][2];
+  templateHtml.comments1 = customerValues[18][0];
+  templateHtml.comments2 = customerValues[19][0];
+  templateHtml.comments3 = customerValues[20][0];
+  templateHtml.comments4 = customerValues[21][0];
+  templateHtml.comments5 = customerValues[22][0];
+  templateHtml.comments6 = customerValues[23][0];
+  templateHtml.comments7 = customerValues[24][0];
+
+  var emailSignature = '<p>If you have any questions, please click reply or send an email to: <a href="mailto:' + pntSalesRepEmail + '?subject=Booking Order for PO# ' + 
+    poNum + ' placed by ' + customer + '">' + pntSalesRepEmail + '</a></p>'
+  var message = templateHtml.evaluate().append(emailSignature).getContent(); // Get the contents of the html document
+
+  const attachments = (arguments.length <= 1) ? 
+                        [getAsBlob(spreadsheet, exportSheet).setName(customer + ' PO# ' + poNum + ".csv")] : 
+                        [getAsBlob(masterBookingSpreadsheet, exportSheet).setName(customer + ' PO# ' + poNum + ".csv")]
+  const image = {"pntLogo": UrlFetchApp.fetch("https://cdn.shopify.com/s/files/1/0018/7079/0771/files/logoh_180x@2x.png?v=1613694206").getBlob()} // PNT Logo
+  var emailSubject = (arguments.length <= 1) ? 'Booking Order for PO# ' + poNum + ' confirmed' : 'MULTIPLE CUSTOMERS IN CSV DATA';
+
+  // Send an email to AJ that will also include the csv file to
+  GmailApp.sendEmail('adrian@pacificnetandtwine.com',//'triteswarehouse@pacificnetandtwine.com', adrian@pacificnetandtwine.com
+                      emailSubject, 
+                      '',
+                    {   replyTo: pntSalesRepEmail,
+                            bcc: 'lb_blitz_allstar@hotmail.com',
+                           //from: 'pntnoreply@gmail.com',
+                           //name: 'PNT Sales',
+                       htmlBody: message,
+                    attachments: attachments,
+                   inlineImages: image
+  });
+}
+
+/**
+ * This function emails the cust 
+ * 
+ * @author Jarren Ralf
+ */
+function emailLinksToCustomers()
+{
+  const activeUsersEmail = Session.getEffectiveUser().getEmail();
+    
+  if (activeUsersEmail !== 'jarrencralf@gmail.com' && activeUsersEmail !== 'adriangatewood@gmail.com')
+    Browser.msgBox('Only Adrian and Jarren have permission to run this function.')
+  else
+  {
+    const sheet = SpreadsheetApp.getActiveSheet()
+
+    if (sheet.getSheetName() === 'Dashboard')
+    {
+      const activeRanges = sheet.getActiveRangeList().getRanges(); // The selected ranges on the item search sheet
+      var firstRows = [], urlValues = [];
+      
+      // Find the first row and last row in the the set of all active ranges
+      for (var r = 0; r < activeRanges.length; r++)
+      {
+        firstRows.push(activeRanges[r].getRow());
+        urlValues.push(sheet.getSheetValues(firstRows[r], 2, activeRanges[r].getLastRow() - firstRows[r] + 1, 1));
+      }
+
+      const urls = [].concat.apply([], urlValues); // Concatenate all of the item values as a 2-D array
+      const row = Math.min(...firstRows); // This is the smallest starting row number out of all active ranges
+
+      if (row === 1) // If the header is included, then remove it
+        urls.shift();
+
+      const emailSubject = 'PNT Booking Program for 2025';
+      const image = {"pntLogo": UrlFetchApp.fetch("https://cdn.shopify.com/s/files/1/0018/7079/0771/files/logoh_180x@2x.png?v=1613694206").getBlob()}
+      const spreadsheetList = [] // A list of booking spreadsheets that don't have access permission for their users yet
+      var pntSalesRepEmail = '', pntSalesRepPhoneNum = '';
+
+      // Loop through the set of all urls
+      urls.map(url => {
+        if (isNotBlank(url[0])) // url is not blank
+        {
+          var ss = SpreadsheetApp.openByUrl(url[0])
+          var sheet = ss.getSheetByName('BOOKING PROGRAM')
+          var customerValues = sheet.getSheetValues(4, 2, 10, 3)
+          var recipientEmail = customerValues[7][2]; // The email will be send to this address
+
+          if (DriveApp.getFileById(ss.getId()).getSharingAccess() === DriveApp.Access.ANYONE_WITH_LINK) // Make sure the spreadsheet has been prepared
+          {
+            switch (customerValues[9][2])
+            {
+              case "Kris Nakashima":
+                pntSalesRepEmail = 'kris@pacificnetandtwine.com'
+                pntSalesRepPhoneNum = '604-370-7325'
+                break;
+              case "Mark Westerlaken":
+                pntSalesRepEmail = 'mark@pacificnetandtwine.com'
+                pntSalesRepPhoneNum = '604-370-7326'
+                break;
+              case "Derrick Mizuyabu":
+                pntSalesRepEmail = 'dmizuyabu@pacificnetandtwine.com';
+                pntSalesRepPhoneNum = '604-370-7327'
+                break;
+              case "Brent Kondo":
+                pntSalesRepEmail = 'brent@pacificnetandtwine.com'
+                pntSalesRepPhoneNum = '604-370-7328'
+                break;
+            }
+
+            var templateHtml = HtmlService.createTemplateFromFile('emailUrl');
+            templateHtml.contactName = (isNotBlank(customerValues[5][2])) ? customerValues[5][2].split(' ', 1)[0] : customer; // Contact's first name, or the business name (if contact is blank)
+            templateHtml.url = url[0].replace(/\/edit.*$/, '/edit?usp=sharing'); // Change the link to the sharing one
+            templateHtml.orderDeadline = toProper(customerValues[2][0].substring(3).toLowerCase());
+            templateHtml.salesRep = customerValues[9][2];
+            templateHtml.phoneNum = pntSalesRepPhoneNum;
+
+            var message = templateHtml.evaluate().getContent(); // Get the contents of the html document
+
+            //Send an email with following chosen parameters to the customer and to the relevant people at PNT
+            GmailApp.sendEmail(recipientEmail, 
+                                emailSubject, 
+                                '',
+                              {   replyTo: pntSalesRepEmail,
+                                    //from: 'pntnoreply@gmail.com',
+                                    //name: 'PNT Sales',
+                                htmlBody: message,
+                            inlineImages: image
+            });
+          }
+          else
+            spreadsheetList.push(sheet.getRange(4, 4).getValue())
+        }
+      })
+
+      if (spreadsheetList.length !== 0)
+        SpreadsheetApp.getUi().alert('The following spreadsheet/s need to be prepared: ' + spreadsheetList.join(', ') + '.')
+    }
+    else
+    {
+      SpreadsheetApp.getActive().getSheetByName('Dashboard').activate()
+      SpreadsheetApp.getUi().alert('Please select which customers you want to send the spreadsheets to.')
+    }
+  }
+}
+
+/**
+ * This function emails the pnt employees all of the links to each of the customer's spreadsheets. The employees may need to remove certain items for specific customers 
+ * and adjust pricing for some customers.
+ * 
+ * @param {String[][]} urls : The multi-array containing a list of the urls and the customer names
+ * @author Jarren Ralf
+ */
+function emailLinksToPntEmployees(urls)
+{
+  const activeUsersEmail = Session.getEffectiveUser().getEmail();
+
+  if (activeUsersEmail !== 'jarrencralf@gmail.com' && activeUsersEmail !== 'adriangatewood@gmail.com')
+    Browser.msgBox('Only Adrian and Jarren have permission to run this function.')
+  else
+  {
+    if (urls == null)
+    {
+      const sectionRemovalSheet = SpreadsheetApp.getActive().getSheetByName('Section Removal');
+      urls = sectionRemovalSheet.getSheetValues(4, 1, sectionRemovalSheet.getLastRow() - 3, 2)
+    }
+
+    //const recipientEmails = "kris@pacificnetandtwine.com, mark@pacificnetandtwine.com, dmizuyabu@pacificnetandtwine.com, brent@pacificnetandtwine.com";
+    const recipientEmails = "lb_blitz_allstar@hotmail.com, triteswarehouse@pacificnetandtwine.com, scottnakashima@hotmail.com";
+    const emailSubject = 'Preparing the 2025 PNT Booking Program Spreadsheets';
+    const image = {"pntLogo": UrlFetchApp.fetch("https://cdn.shopify.com/s/files/1/0018/7079/0771/files/logoh_180x@2x.png?v=1613694206").getBlob()}
+
+    // Create an html table that will have all of the urls contained in it
+    var urlTableHtml = 
+      '<div class="ritz grid-container" dir="ltr"> <table class="waffle" cellspacing="0" cellpadding="0"> <tbody><tr style="height: 19px"><td class="s6" dir="ltr" colspan="2"></td></tr>';
+
+    urls.map(url => 
+      urlTableHtml += '<tr style="height: 20px"> <td class="s4" dir="ltr">' + 
+        url[1].replaceAll('&', '&amp;').replaceAll('\'', '&#39;') + 
+        '</td><td class="s5" dir="ltr"><a target="_blank" href="' + url[0] + '">' + url[0] + '</a></td></tr>'
+    )
+
+    urlTableHtml += '</tbody></table></div><body><p>Thank you<br><br>Adrian Gatewood<br>Pacific Net & Twine<br>604.274.7238<br>800.895.4327</p></body>';
+
+    var message = HtmlService.createTemplateFromFile('emailALLUrls').evaluate().append(urlTableHtml).getContent(); // Get the contents of the html document
+
+    //Send an email with following chosen parameters to the customer and to the relevant people at PNT
+    GmailApp.sendEmail(recipientEmails, 
+                        emailSubject, 
+                        '',
+                      {     name: 'Adrian Gatewood',
+                        htmlBody: message,
+                    inlineImages: image
+    });
+  }
+}
+
+function emailSelectedSpreadsheetToAJ()
+{
+  const spreadsheet = SpreadsheetApp.getActive();
+  const sheet = SpreadsheetApp.getActiveSheet()
+
+  if (sheet.getSheetName() === 'Dashboard')
+  {
+    const rows = []
+    sheet.getActiveRangeList().getRanges().map(range => [range.getRow(), range.getLastRow()]).map(row => {
+      for (var r = row[0]; r <= row[1]; r++)
+        rows.push(r)
+    })
+
+    if (rows[0] === 1)
+      rows.shift()
+
+    if (rows[rows.length - 1] === 20)
+      spreadsheet.toast('B & J Sporting Goods do not have a CUST #. Get Kris to create them in Adagio and then add their CUST # to the CSV file for import into Adagio.', 'CSV Needs Modification!', -1)
+
+    if (rows.length !== 0)
+    {
+      if (rows.length !== 1)
+      {
+        const exportValues = []
+        rows.map(row => exportValues.push(...SpreadsheetApp.openByUrl(sheet.getSheetValues(row, 2, 1, 1)[0][0]).getSheetByName('Export').getDataRange().getValues()))
+        const exportSheet = spreadsheet.getSheetByName('Export')
+        exportSheet.clear().getRange(1, 1, exportValues.length, exportValues[0].length).setNumberFormat('@').setValues(exportValues)
+        var ss = SpreadsheetApp.openByUrl(sheet.getSheetValues(rows[0], 2, 1, 1)[0][0])
+        emailAdrianAdagioExportCsv(ss, exportSheet, spreadsheet);
+      }
+      else
+      {
+        var ss = SpreadsheetApp.openByUrl(sheet.getSheetValues(rows[0], 2, 1, 1)[0][0])
+        emailAdrianAdagioExportCsv(ss);
+      }
+    }
+    else
+      Browser.msgBox('Select a Customer.')
+  }
+  else
+  {
+    spreadsheet.getSheetByName('Dashboard').activate();
+    spreadsheet.toast('User must select a row on the Dashboard in order to send an email.', '', 30)
+  }
 }
 
 /**
@@ -444,7 +756,8 @@ function fancyEmailBookingOrder(spreadsheet)
  * @license MIT
  * 
  * © 2020 xfanatical.com. All Rights Reserved.
- * @param {Spreadsheet} spreadsheet : The specific spreadsheet that will be used to convert the export page into a BLOB (Binary Large Object)
+ * @param {Spreadsheet} spreadsheet : The active spreadsheet
+ * @param   {Sheet}        sheet    : The specific sheet that will be converted into the BLOB object.
  * @return The packing slip sheet as a BLOB object that will eventually get converted to pdf document that will be attached to an email sent to the customer
  * @author Jason Huang
  */
@@ -500,39 +813,111 @@ function getAsBlob(spreadsheet, sheet)
   return response.getBlob()
 }
 
-function getSections()
+/**
+* Gets the last row number based on a selected column range values
+*
+* @param {Object[][]} range Takes a 2d array of a single column's values
+* @returns {Number} The last row number with a value. 
+*/
+function getLastRowSpecial(range)
 {
-  const sectionSheet = SpreadsheetApp.getActiveSheet();
-
-  if (sectionSheet.getSheetName() !== 'Section Removal')
+  var rowNum = 0;
+  var blank = false;
+  
+  for (var row = 0; row < range.length; row++)
   {
-    Browser.msgBox('You must be on the Section Removal sheet to run this function')
-    SpreadsheetApp.getActive().getSheetByName('Section Removal').activate();
-  }
-  else 
-  {
-    const url = sectionSheet.getRange('A4').getValue()
-    const orderSheet = SpreadsheetApp.openByUrl(url).getSheetByName('ORDER FORM')
-    const range = orderSheet.getRange(4, 1, orderSheet.getLastRow() - 3);
-    const colours = range.getBackgrounds();
-    const values = range.getValues();
-    const numRows = 1;
-    var sectionRemovalValues = [[] ,[],[]], col = -1;
-    
-    for (var row = 0; row < values.length; row++)
+    if(range[row][0] === "" && !blank)
     {
-      if (colours[row][0] == '#6d9eeb')
-      {
-        sectionRemovalValues[0].push(values[row][0])
-        sectionRemovalValues[1].push(row + 4)
-        sectionRemovalValues[2].push(numRows)
-        col++
-      }
-      else
-        sectionRemovalValues[2][col]++;
+      rowNum = row;
+      blank = true;
     }
+    else if (isNotBlank(range[row][0]))
+      blank = false;
+  }
+  return (rowNum !== 0) ? rowNum : row;
+}
 
-    sectionSheet.getRange(1, 3, 3, sectionRemovalValues[0].length).setValues(sectionRemovalValues)
+/**
+ * This function uses an original copy of the booking program spreadsheet to retrieve all of the row numbers pertaining to each section and the number of rows
+ * per section.
+ * 
+ * @param {Spreadsheet} ss  : An original copy of the booking program spreadsheet 
+ * @param {String[][]} urls : A multi-array containing a list of the urls for each of the customers spreadsheets
+ * @returns 
+ * @author Jarren Ralf
+ */
+function getSections(ss, urls)
+{
+  const activeUsersEmail = Session.getEffectiveUser().getEmail();
+    
+  if (activeUsersEmail !== 'jarrencralf@gmail.com' && activeUsersEmail !== 'adriangatewood@gmail.com')
+    Browser.msgBox('Only Adrian and Jarren have permission to run this function.')
+  else
+  {
+    var sectionSheet = SpreadsheetApp.getActiveSheet();
+
+    if (!ss && !urls && sectionSheet.getSheetName() !== 'Section Removal')
+    {
+      Browser.msgBox('You must be on the Section Removal sheet to run this function')
+      SpreadsheetApp.getActive().getSheetByName('Section Removal').activate();
+    }
+    else 
+    {
+      const spreadsheet = SpreadsheetApp.getActive()
+
+      if (arguments.length === 0)
+      {
+        ss = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1RMsGXaAumkvGdNbSfFhqCiAE07MAg6TWpyHN0PPzZgo/edit") // original copy of the booking program spreadsheet
+        const sheet = spreadsheet.getSheetByName('Dashboard')
+        urls = sheet.getSheetValues(2, 2, getLastRowSpecial(sheet.getRange('B:B').getValues()) - 1, 1)
+      }
+
+      if (sectionSheet.getSheetName() !== "Section Removal")
+        sectionSheet = spreadsheet.getSheetByName("Section Removal")
+
+      const orderSheet = ss.getSheetByName('ORDER FORM')
+      const range = orderSheet.getRange(4, 1, orderSheet.getLastRow() - 3);
+      const colours = range.getBackgrounds();
+      const values = range.getValues();
+      const numRows = 1;
+      var sectionRemovalValues = [[], [], []], col = -1;
+      
+      for (var row = 0; row < values.length; row++)
+      {
+        if (colours[row][0] == '#6d9eeb') // If the background colour is blue, then this is a section header
+        {
+          sectionRemovalValues[0].push(values[row][0]) // Section name
+          sectionRemovalValues[1].push(row + 4) // The section's row number
+          sectionRemovalValues[2].push(numRows) // The number of rows in the section
+          col++
+        }
+        else // If the current cell is not a header then increment the counter
+          sectionRemovalValues[2][col]++;
+      }
+
+      const customers = urls.map(url => [url[0], SpreadsheetApp.openByUrl(url[0]).getName().split(' - ')[1]]); // Get the customers name as well as url
+      const numCustomers = customers.length;
+      const numSections = sectionRemovalValues[0].length;
+      const maxRow = sectionSheet.getMaxRows();
+      const maxCol = sectionSheet.getMaxColumns();
+      const currentUser = Session.getEffectiveUser();
+      const otherEditors = spreadsheet.getEditors().map(user => user.getEmail())
+      const unprotectedRange = sectionSheet.getRange(1, 3, 3, numSections).setValues(sectionRemovalValues) // The section values, which contain the name, row number, and number of rows
+        .offset(3, -2, numCustomers, customers[0].length).setValues(customers) // The customers name and url
+        .offset(0, 2, numCustomers, numSections).insertCheckboxes().check()    // The set of checkboxes to be added
+
+      spreadsheet.getSheetByName('Dashboard').protect().addEditor(currentUser).removeEditors(otherEditors) // Don't allow people to edit the Dashboard
+      sectionSheet.protect().addEditor(currentUser).removeEditors(otherEditors).setUnprotectedRanges([unprotectedRange]) // Only allow people to click the checkboxes
+
+      // Delete the excess rows and columns
+      if (maxRow > numCustomers + 3)
+        sectionSheet.deleteRows(numCustomers + 4, maxRow - numCustomers - 3)
+
+      if (maxCol > numSections + 2)
+        sectionSheet.deleteColumns(numSections + 3, maxCol - numSections - 2)
+
+      return customers;
+    }
   }
 }
 
@@ -548,13 +933,30 @@ function isNotBlank(str)
   return str !== '';
 }
 
+/**
+ * This function removes the 'current_customer' from the CacheService's document cache.
+ * 
+ * @author Jarren Ralf
+ */
+function removeKeys()
+{
+  const cache = CacheService.getDocumentCache();
+  cache.remove('current_customer')
+}
+
+/**
+ * This function loops through the checkboxes on the Section Removal sheet and when it finds a box that is not checked, it opens the customers spreadsheet, 
+ * finds that section, and deletes all of the rows in that section.
+ * 
+ * @author Jarren Ralf
+ */
 function removeSections()
 {
   if (true)
     Browser.msgBox('You can\'t delete sections anymore becasue the spreadsheets have already been distributed to customers.')
   else
   {
-    const activeUsersEmail = Session.getActiveUser().getEmail();
+    const activeUsersEmail = Session.getEffectiveUser().getEmail();
     
     if (activeUsersEmail !== 'jarrencralf@gmail.com' && activeUsersEmail !== 'adriangatewood@gmail.com')
       Browser.msgBox('Only Adrian and Jarren have permission to run this function.')
@@ -570,11 +972,13 @@ function removeSections()
       else 
       {
         const sectionValues = SpreadsheetApp.getActiveSheet().getDataRange().getValues()
+        const numRows = sectionValues.length;
+        const numCols = sectionValues[0].length
         var sections = [], orderSheet;
 
-        for (var i = 3; i < sectionValues.length; i++)
+        for (var i = 3; i < numRows; i++)
         {
-          for (var j = sectionValues[0].length - 1; j > 1; j--)
+          for (var j = numCols - 1; j > 1; j--) // Start from the bottom of the page to delete rows
           {
             if (sectionValues[i][j] !== true)
               sections.push([sectionValues[1][j], sectionValues[2][j]])
@@ -587,7 +991,56 @@ function removeSections()
             sections.length = 0;
           }
         }
+
+        // Once this function is run, wipe out all of the data on the page because this function is only designed to run once
+        if (numCols - 3 !== 0 && numRows - 5 !== 0)
+        {
+          sectionSheet.deleteColumns(4, numCols - 3)
+          sectionSheet.deleteRows(5, numRows - 4)
+          sectionSheet.getRangeList(['A4:C4', 'C1:C3']).clear()
+        }
       }
     }
   }
+}
+
+/**
+ * This function takes the given string and makes sure that each word in the string has a capitalized 
+ * first letter followed by lower case.
+ * 
+ * @param {String} str : The given string
+ * @return {String} The output string with proper case
+ * @author Jarren Ralf
+ */
+function toProper(str)
+{
+  var numLetters;
+  var words = str.toString().split(' ');
+
+  for (var word = 0, string = ''; word < words.length; word++) 
+  {
+    numLetters = words[word].length;
+
+    if (numLetters == 0) // The "word" is a blank string (a sentence contained 2 spaces)
+      continue; // Skip this iterate
+    else if (numLetters == 1) // Single character word
+    {
+      if (words[word][0] !== words[word][0].toUpperCase()) // If the single letter is not capitalized
+        words[word] = words[word][0].toUpperCase(); // Then capitalize it
+    }
+    else
+    {
+      /* If the first letter is not upper case or the second letter is not lower case, then
+       * capitalize the first letter and make the rest of the word lower case.
+       */
+      if (words[word][0] !== words[word][0].toUpperCase() || words[word][1] !== words[word][1].toLowerCase())
+        words[word] = words[word][0].toUpperCase() + words[word].substring(1).toLowerCase();
+    }
+
+    string += words[word] + ' '; // Add a blank space at the end
+  }
+
+  string = string.slice(0, -1); // Remove the last space
+
+  return string;
 }
