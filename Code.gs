@@ -17,7 +17,7 @@ function onChange(e)
     const values = range.getValues()
     var ss = '';
 
-    for (var row = 1; row < values.length; row++)
+    for (var row = 0; row < values.length; row++)
     {
       if (values[row][2] === true && !values[row][4] && !ss) // Is order complete is true, and there is no email has been sent yet 
       {
