@@ -24,7 +24,7 @@ function onChange(e)
         ss = SpreadsheetApp.openByUrl(values[row][1])
         DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.DOMAIN, DriveApp.Permission.NONE) // Remove the edit access for the customer
         //emailBookingOrder(ss) // Email the customer their order confirmation as well as pnt employess and AJ the Adagio csv
-        values[row][4] = 'Yes'; // Is email sent? set to 'Yes'
+        values[row][4] = 'No'; // Is email sent? set to 'Yes'
         values[row][5] = Utilities.formatDate(new Date(), e.source.getSpreadsheetTimeZone(), "EEE, d MMM  h:mm:ss a") // Timestamp
       }
 
@@ -78,13 +78,18 @@ function installedOnEdit(e)
 
         if (isOrderSubmitted) // Unlock the customers spreadsheet so that they can keep editing 
         {
+          const spreadsheet = e.source;
+          spreadsheet.toast('', 'Unlocking spreadsheet...', -1)
           const rng = range.offset(0, -5, 1, 5); // Relavant data from the Dashboard, include url
           const values = rng.getValues();
           const ss = SpreadsheetApp.openByUrl(values[0][0]) 
           
           ss.getRange('BOOKING PROGRAM!A30').uncheck()
           ss.getRange('BOOKING PROGRAM!D30').uncheck()
-          ss.getRange('ORDER FORM!A2').uncheck()
+          ss.getRange('Order Form!A2').uncheck()
+          ss.getRange('Order Form (Hoochies)!A2').uncheck()
+          ss.getRange('Order Form (Golden Bait)!A2').uncheck()
+          ss.getRange('Order Form (Clearance)!A2').uncheck()
           values[0][1] = '=IMPORTRANGE(\"' + values[0][0] + '\",\"\'BOOKING PROGRAM\'!D30\")'; // Reset the importrange
           values[0][2] = '=IF(EQ(IMPORTRANGE(\"' + values[0][0] + '\", \"\'BOOKING PROGRAM\'!B12\"), 0), "",IMPORTRANGE(\"' + values[0][0] + '\", \"\'BOOKING PROGRAM\'!B12\"))'
           values[0][3] = ''
@@ -92,11 +97,11 @@ function installedOnEdit(e)
           DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT) // Give the customer back edit access
           rng.setValues(values)
           range.uncheck()
-          e.source.toast('Access has been granted to anyone with a link to the spreadsheet')
+          spreadsheet.toast('Access has been granted to anyone with a link to the spreadsheet')
         }
         else // This code block "prepares" the spreadsheet for the customer
         {
-          e.source.toast('Preparing booking program...', -1)
+          e.source.toast('','Preparing booking program...',-1)
           const url = range.offset(0, -5, 1, 1).getValues()[0][0]
           const ss = SpreadsheetApp.openByUrl(url)
           const sheets = ss.getSheets();
@@ -131,13 +136,14 @@ function installedOnEdit(e)
                      sheetName === 'Order Form (Golden Bait)' || sheetName === 'Order Form (Clearance)')
             {
               const rowStart = 19;
-              const rng = sheets[s].getRange(rowStart, 4, sheets[s].getLastRow() - rowStart + 1, 6)
+              const maxRows = sheets[s].getMaxRows() - rowStart + 1;
+              const rng = sheets[s].getRange(rowStart, 4, maxRows, 6)
               const values = rng.getValues() // Remove the formulas by pasting values in the cells
               var ranges = [sheets[s].getRange(2, 1), sheets[s].getRange(2, 11)], numRows = 0;
               rng.setValues(values) // Remove the formulas that are no longer needed
 
               // Gather all of the order quantity ranges that need to be editable by the customer
-              for (var i = 0; i < values.length; i++)
+              for (var i = 0; i < maxRows; i++)
               {
                 if (isNotBlank(values[i][3])) // If cell value is not blank then increment the counter
                   numRows++;
