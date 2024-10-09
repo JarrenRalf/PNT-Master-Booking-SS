@@ -279,6 +279,7 @@ function createBookingSpreadsheets()
         else
         {
           ss = originalSS.copy('Pacific Net & Twine Ltd. 2025 Booking Program - ' + customers[customer][0]) // Add customer name to the spreadsheet name
+          ss.addEditor('moosepnt@gmail.com')
           ss.getSheetByName('BOOKING PROGRAM').getRange(4, 4).setDataValidation(null).setValue(customers[customer][0]) // Remove data validation so a different customer can't be selected
           url = ss.getUrl()
           urls.push([url, '=IMPORTRANGE(\"' + url + '\", \"\'BOOKING PROGRAM\'!D30\")', // Build the import range formulas
